@@ -1,6 +1,7 @@
 # HelpDesk API
 
 [![CI](https://github.com/MohammadAlfalah/helpdesk-api/actions/workflows/ci.yml/badge.svg)](https://github.com/MohammadAlfalah/helpdesk-api/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-Swagger-85EA2D?logo=swagger&logoColor=black)](https://helpdesk-api-9d3d.onrender.com/swagger)
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-4169E1?logo=postgresql&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -14,7 +15,12 @@ It's a clean, production-shaped backend: role-based JWT auth, a service layer,
 PostgreSQL via EF Core, pagination/filtering/sorting, RFC 7807 error responses,
 Swagger, a unit + integration test suite, CI, and a one-command Docker setup.
 
-> **Live demo:** _add your Render URL here after deploying_ — e.g. `https://helpdesk-api.onrender.com/swagger`
+> **🌐 Live demo:** **<https://helpdesk-api-9d3d.onrender.com/swagger>** — interactive Swagger UI.
+> Log in via `POST /api/auth/login` with the seeded agent (`agent@helpdesk.local` / `Agent#12345`),
+> click **Authorize**, paste `Bearer <token>`, and try the endpoints.
+> _(Hosted on Render's free tier, so the first request after it's been idle takes ~30 s to wake.)_
+
+[![HelpDesk API — Swagger UI](docs/swagger.png)](https://helpdesk-api-9d3d.onrender.com/swagger)
 
 ---
 
