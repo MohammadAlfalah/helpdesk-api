@@ -4,6 +4,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Use Workstation GC instead of the default Server GC. Server GC pre-allocates
+         per-core heaps and is memory-hungry; on a small (e.g. 512 MB free-tier)
+         instance that causes OOM restart loops. Workstation GC keeps the footprint
+         small for a low-traffic API. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
