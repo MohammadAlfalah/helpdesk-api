@@ -1,0 +1,33 @@
+# Render Blueprint — provisions the API (Docker) + a free PostgreSQL database.
+# Deploy: push to GitHub, then on https://dashboard.render.com create a new
+# "Blueprint" from this repo. Render reads this file, creates both resources,
+# wires the database connection in, and gives you a public URL.
+services:
+  - type: web
+    name: helpdesk-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Render injects the database connection URL; the app converts it to an
+      # Npgsql connection string (see DatabaseUrl.cs).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: helpdesk-db
+          property: connectionString
+      # A strong JWT signing key, generated and kept by Render (never committed).
+      - key: Jwt__Key
+        generateValue: true
+      - key: Jwt__Issuer
+        value: HelpDeskApi
+      - key: Jwt__Audience
+        value: HelpDeskClient
+
+databases:
+  # NOTE: Render's free PostgreSQL instances are removed ~30 days after creation.
+  # That's fine for a portfolio demo; for anything durable, bump `plan` to a paid
+  # tier (e.g. basic-256mb).
+  - name: helpdesk-db
+    plan: free
+    databaseName: helpdesk
+    user: helpdesk

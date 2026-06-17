@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="HelpDesk.Api/HelpDesk.Api.csproj" />
+  <Project Path="HelpDesk.Tests/HelpDesk.Tests.csproj" />
+</Solution>

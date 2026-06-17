@@ -1,0 +1,16 @@
+# ---- .NET ----
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# ---- Environment / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Logs / OS ----
+*.log
+.DS_Store
+Thumbs.db
