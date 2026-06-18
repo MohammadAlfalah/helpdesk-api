@@ -33,6 +33,8 @@ slide-over to read the comment thread, post **public replies or internal notes**
 **reassign**, **change status**, and **raise new tickets** — every action hits the API
 and persists.
 
+![HelpDesk agent console — the ticket inbox](docs/console.png)
+
 It's built from the bundled **HelpDesk Design System** (in [`design-system/`](design-system/)) —
 a warm, terracotta-themed component library and styleguide — rendered with **no build step**
 (React + Babel in the browser) so the whole UI is just static files the API hands out.
