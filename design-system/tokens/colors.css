@@ -1,0 +1,95 @@
+/* ============================================================
+   COLORS — warm, earthy palette
+   Terracotta primary · soft cream surfaces · charcoal text
+   Base ramps first, then semantic aliases. Reference the
+   semantic aliases in components, not the raw ramps.
+   ============================================================ */
+:root {
+  /* ---- Cream / warm neutrals ---- */
+  --cream-50:   #FDFBF7;
+  --cream-100:  #FAF6F0;  /* app background */
+  --cream-200:  #F3ECE2;
+  --cream-300:  #EADFD1;  /* hairline borders */
+  --sand-400:   #D9CAB4;
+  --taupe-500:  #AC9A86;
+  --taupe-600:  #837363;
+  --charcoal-700: #4C4239;
+  --charcoal-800: #322B25;
+  --charcoal-900: #221C18;
+
+  /* ---- Terracotta (primary) ---- */
+  --terracotta-50:  #FBEDE8;
+  --terracotta-100: #F6D9CD;
+  --terracotta-200: #ECB7A2;
+  --terracotta-300: #E09A80;
+  --terracotta-400: #D2785B;
+  --terracotta-500: #C75D4A;  /* primary */
+  --terracotta-600: #B14938;  /* hover */
+  --terracotta-700: #8E3A2C;  /* active / pressed */
+
+  /* ---- Clay accent (secondary warm) ---- */
+  --clay-400: #CC8A4E;
+  --clay-500: #B9742F;
+
+  /* ---- Status / feedback ramps (earthy, muted) ---- */
+  --blue-100:  #E9EEF3;  --blue-500:  #5E7E9B;  --blue-600:  #3C5A73;
+  --green-100: #E6EFE2;  --green-500: #5E8C5A;  --green-600: #3C6438;
+  --amber-100: #F6EBD3;  --amber-500: #C2902F;  --amber-600: #8A6312;
+  --red-100:   #F7DDD7;  --red-500:   #B23A2E;  --red-600:   #8A2A20;
+  --orange-100: #F4E0CF; --orange-500: #CC6B3C; --orange-600: #9A4E22;
+
+  /* ============================================================
+     SEMANTIC ALIASES
+     ============================================================ */
+  /* Surfaces */
+  --bg:             var(--cream-100);   /* app background (alias) */
+  --surface-app:    var(--cream-100);
+  --surface-card:   #FFFFFF;
+  --surface-raised: var(--cream-50);
+  --surface-sunken: var(--cream-200);
+  --surface-hover:  var(--cream-200);
+
+  /* Text */
+  --text-strong:    var(--charcoal-900);
+  --text-body:      var(--charcoal-800);
+  --text-muted:     var(--taupe-600);
+  --text-faint:     var(--taupe-500);
+  --text-on-primary: #FFFFFF;
+  --text-link:      var(--terracotta-600);
+
+  /* Borders */
+  --border:         var(--sand-400);    /* default visible border (alias) */
+  --border-subtle:  var(--cream-300);
+  --border-default: var(--sand-400);
+  --border-strong:  var(--taupe-500);
+  --border-focus:   var(--terracotta-500);
+
+  /* Brand / interactive */
+  --brand:             var(--terracotta-500);
+  --brand-hover:       var(--terracotta-600);
+  --brand-active:      var(--terracotta-700);
+  --brand-soft:        var(--terracotta-50);
+  --brand-soft-fg:     var(--terracotta-700);
+  --brand-soft-border: var(--terracotta-100);
+
+  /* Focus ring */
+  --ring: 0 0 0 3px var(--terracotta-100);
+
+  /* Feedback */
+  --danger:       var(--red-500);   --danger-soft:  var(--red-100);
+  --success:      var(--green-500); --success-soft: var(--green-100);
+  --warning:      var(--amber-500); --warning-soft: var(--amber-100);
+  --info:         var(--blue-500);  --info-soft:    var(--blue-100);
+
+  /* ---- Ticket STATUS (bg + readable fg) ---- */
+  --status-open-bg:        var(--blue-100);   --status-open-fg:        var(--blue-600);
+  --status-inprogress-bg:  var(--amber-100);  --status-inprogress-fg:  var(--amber-600);
+  --status-resolved-bg:    var(--green-100);  --status-resolved-fg:    var(--green-600);
+  --status-closed-bg:      var(--cream-200);  --status-closed-fg:      var(--charcoal-700);
+
+  /* ---- Ticket PRIORITY (bg + readable fg) ---- */
+  --prio-low-bg:     var(--green-100);   --prio-low-fg:     var(--green-600);
+  --prio-medium-bg:  var(--amber-100);   --prio-medium-fg:  var(--amber-600);
+  --prio-high-bg:    var(--orange-100);  --prio-high-fg:    var(--orange-600);
+  --prio-urgent-bg:  var(--red-100);     --prio-urgent-fg:  var(--red-600);
+}

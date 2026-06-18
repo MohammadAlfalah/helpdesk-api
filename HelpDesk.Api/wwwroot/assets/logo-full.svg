@@ -1,0 +1,9 @@
+<svg width="190" height="44" viewBox="0 0 190 44" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HelpDesk">
+  <rect width="44" height="44" rx="12" fill="#C25E3C"></rect>
+  <path d="M14 24.5C14 18.7 17.6 15 22 15C26.4 15 30 18.7 30 24.5" stroke="#FDFBF7" stroke-width="2.6" stroke-linecap="round"></path>
+  <rect x="11.5" y="23" width="5.5" height="8.5" rx="2.75" fill="#FDFBF7"></rect>
+  <rect x="27" y="23" width="5.5" height="8.5" rx="2.75" fill="#FDFBF7"></rect>
+  <path d="M30 30.5C30 32.7 28 34 24.5 34" stroke="#FDFBF7" stroke-width="2.4" stroke-linecap="round"></path>
+  <circle cx="22.5" cy="34" r="1.8" fill="#FDFBF7"></circle>
+  <text x="56" y="29" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.02em" fill="#292420">Help<tspan fill="#C25E3C">Desk</tspan></text>
+</svg>

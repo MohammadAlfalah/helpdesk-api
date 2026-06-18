@@ -1,0 +1,44 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Layout — Card" subtitle="The base surface · elevation levels" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; background: var(--bg); font-family: var(--font-sans); }
+  .wrap { padding: 26px; display: flex; gap: 18px; align-items: stretch; }
+  .meta { font: var(--font-label); color: var(--text-strong); }
+  .sub { font: var(--font-small); color: var(--text-muted); margin-top: 4px; }
+  .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--text-faint); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div id="root" class="wrap"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { Card } = window.HelpDeskDesignSystem_35c226;
+  function Tile({ elevation, label }) {
+    return (
+      <Card elevation={elevation} style={{ flex: 1 }}>
+        <div className="tag">{label}</div>
+        <div className="meta">VPN keeps dropping</div>
+        <div className="sub">Reported by Sam Liu · 2h ago</div>
+      </Card>
+    );
+  }
+  function Demo() {
+    return (
+      <>
+        <Tile elevation="sm" label="Elevation sm" />
+        <Tile elevation="md" label="Elevation md" />
+        <Tile elevation="lg" label="Elevation lg" />
+      </>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

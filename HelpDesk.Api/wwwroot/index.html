@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HelpDesk — Agent Console</title>
+<link rel="icon" href="/assets/logo-mark.svg" />
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: var(--bg); font-family: var(--font-sans); color: var(--text-body); }
+  #app { height: 100vh; display: flex; overflow: hidden; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .content { flex: 1; min-width: 0; position: relative; overflow: hidden; }
+  .center-msg { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--text-muted); }
+  .flash { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 80;
+           background: var(--charcoal-900, #221C18); color: var(--cream-50, #FAF6F0);
+           padding: 11px 18px; border-radius: var(--radius-full); box-shadow: var(--shadow-lg);
+           font: var(--font-small); }
+  .login-wrap { height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+
+<!-- design system (compiled component library) -->
+<script src="/_ds_bundle.js"></script>
+<script>window.DS = window.HelpDeskDesignSystem_35c226;</script>
+
+<!-- real API client + console screens -->
+<script src="/app/api.js"></script>
+<script type="text/babel" src="/app/util.jsx"></script>
+<script type="text/babel" src="/app/Sidebar.jsx"></script>
+<script type="text/babel" src="/app/Topbar.jsx"></script>
+<script type="text/babel" src="/app/TicketInbox.jsx"></script>
+<script type="text/babel" src="/app/TicketDetail.jsx"></script>
+
+<script type="text/babel">
+  const api = window.HelpDeskApi;
+  const { Button, Input, Select, Textarea, Card } = window.DS;
+
+  // ---- Sign-in screen -----------------------------------------------------
+  function LoginView({ onLogin }) {
+    // Pre-filled with the seeded demo agent so reviewers can sign in in one click.
+    const [email, setEmail] = React.useState('agent@helpdesk.local');
+    const [password, setPassword] = React.useState('Agent#12345');
+    const [error, setError] = React.useState(null);
+    const [busy, setBusy] = React.useState(false);
+    React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
+
+    async function submit(e) {
+      e.preventDefault();
+      setError(null); setBusy(true);
+      try { await onLogin(email.trim(), password); }
+      catch (ex) { setError(ex.message || 'Sign in failed.'); setBusy(false); }
+    }
+
+    return (
+      <div className="login-wrap">
+        <Card style={{ width: 380, maxWidth: '92%', padding: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <img src="/assets/logo-full.svg" height="30" alt="HelpDesk" />
+          </div>
+          <h1 style={{ font: 'var(--font-h2)', color: 'var(--text-strong)', textAlign: 'center', margin: '6px 0 2px' }}>Sign in</h1>
+          <p style={{ font: 'var(--font-small)', color: 'var(--text-muted)', textAlign: 'center', margin: '0 0 22px' }}>Agent console</p>
+          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Input label="Email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            {error && <div style={{ font: 'var(--font-small)', color: 'var(--danger)' }}>{error}</div>}
+            <Button type="submit" variant="primary" fullWidth disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+          </form>
+          <p style={{ font: 'var(--font-small)', color: 'var(--text-faint)', textAlign: 'center', marginTop: 18, marginBottom: 0 }}>
+            Demo agent — <span style={{ fontFamily: 'var(--font-mono)' }}>agent@helpdesk.local</span> · <span style={{ fontFamily: 'var(--font-mono)' }}>Agent#12345</span>
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  function NewTicketModal({ open, onClose, onCreate }) {
+    const [title, setTitle] = React.useState('');
+    const [category, setCategory] = React.useState('Network');
+    const [priority, setPriority] = React.useState('Medium');
+    const [desc, setDesc] = React.useState('');
+    if (!open) return null;
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(34,28,24,0.38)' }} />
+        <Card padding="none" style={{ position: 'relative', width: 520, maxWidth: '92%', boxShadow: 'var(--shadow-xl)' }}>
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <h2 style={{ font: 'var(--font-h2)', margin: 0, color: 'var(--text-strong)' }}>New ticket</h2>
+          </div>
+          <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Input label="Subject" placeholder="Briefly describe the issue" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Select label="Category" containerStyle={{ flex: 1 }} options={['Network', 'Hardware', 'Account', 'Billing', 'General']} value={category} onChange={(e) => setCategory(e.target.value)} />
+              <Select label="Priority" containerStyle={{ flex: 1 }} options={['Low', 'Medium', 'High', 'Urgent']} value={priority} onChange={(e) => setPriority(e.target.value)} />
+            </div>
+            <Textarea label="Description" rows={4} placeholder="What happened? What did you expect?" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <div style={{ padding: 16, borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" icon="plus" disabled={!title.trim()} onClick={() => { onCreate({ title, category, priority, description: desc }); onClose(); }}>Create ticket</Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const NAV_TITLES = {
+    inbox: ['Inbox', 'All tickets across your team'],
+    escalated: ['Escalated', 'Tickets that breached their SLA'],
+    resolved: ['Resolved', 'Recently resolved & closed'],
+    agents: ['Agents', 'Your support team'],
+    reports: ['Reports', 'SLA performance & volume'],
+  };
+
+  function CenterMsg({ children, onRetry }) {
+    return (
+      <div className="center-msg">
+        <div style={{ font: 'var(--font-body)' }}>{children}</div>
+        {onRetry && <Button variant="secondary" onClick={onRetry}>Try again</Button>}
+      </div>
+    );
+  }
+
+  function Placeholder({ label }) {
+    return <div className="center-msg"><Icon name="hammer" size={24} /><div>{label} — coming soon.</div></div>;
+  }
+
+  // ---- App ----------------------------------------------------------------
+  function App() {
+    const [authed, setAuthed] = React.useState(api.isAuthenticated());
+    const [user, setUser] = React.useState(api.currentUser());
+    const [booting, setBooting] = React.useState(api.isAuthenticated());
+    const [loadError, setLoadError] = React.useState(null);
+    const [tickets, setTickets] = React.useState([]);
+    const [commentMap, setCommentMap] = React.useState({});
+    const [agents, setAgents] = React.useState([]);
+    const [active, setActive] = React.useState('inbox');
+    const [selected, setSelected] = React.useState(null);
+    const [modal, setModal] = React.useState(false);
+    const [flash, setFlash] = React.useState(null);
+
+    React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
+
+    const flashTimer = React.useRef(null);
+    function notify(msg) {
+      setFlash(msg);
+      clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlash(null), 3200);
+    }
+
+    async function loadData() {
+      setBooting(true); setLoadError(null);
+      try {
+        const ags = await api.getAgents();
+        const tks = await api.getTickets();
+        setAgents(ags);
+        setTickets(tks);
+      } catch (e) {
+        if (!api.isAuthenticated()) { setAuthed(false); setUser(null); }  // token expired → back to login
+        else setLoadError(e.message);
+      } finally {
+        setBooting(false);
+      }
+    }
+    React.useEffect(() => { if (authed) loadData(); }, [authed]);
+
+    async function onLogin(email, password) {
+      const u = await api.login(email, password);   // throws on bad credentials
+      setUser(u);
+      setAuthed(true);
+    }
+    function onLogout() {
+      api.logout();
+      setAuthed(false); setUser(null);
+      setTickets([]); setCommentMap({}); setAgents([]); setSelected(null); setActive('inbox');
+    }
+
+    async function openTicket(t) {
+      setSelected(t);
+      if (!commentMap[t.id]) {
+        try {
+          const cs = await api.getComments(t.id);
+          setCommentMap((m) => ({ ...m, [t.id]: cs }));
+        } catch (e) { notify(e.message); }
+      }
+    }
+    async function reply(ticketId, body, isInternal) {
+      try {
+        const c = await api.addComment(ticketId, body, isInternal);
+        setCommentMap((m) => ({ ...m, [ticketId]: [...(m[ticketId] || []), c] }));
+      } catch (e) { notify(e.message); }
+    }
+    async function create(payload) {
+      try {
+        const t = await api.createTicket(payload);
+        setTickets((prev) => [t, ...prev]);
+        setActive('inbox');
+        notify('Ticket #TK-' + t.id + ' created.');
+      } catch (e) { notify(e.message); }
+    }
+    function replaceTicket(t) {
+      setTickets((prev) => prev.map((x) => (x.id === t.id ? t : x)));
+      setSelected((s) => (s && s.id === t.id ? t : s));
+    }
+    async function onAssign(ticketId, agentIdStr) {
+      try { replaceTicket(await api.assignTicket(ticketId, agentIdStr)); notify('Assignment updated.'); }
+      catch (e) { notify(e.message); }
+    }
+    async function onStatus(ticketId, status) {
+      try { replaceTicket(await api.updateTicket(ticketId, { status })); notify('Status set to ' + status + '.'); }
+      catch (e) { notify(e.message); }
+    }
+
+    if (!authed) return <LoginView onLogin={onLogin} />;
+
+    const counts = {
+      all: tickets.length,
+      open: tickets.filter((t) => t.status === 'Open').length,
+      inprogress: tickets.filter((t) => t.status === 'InProgress').length,
+      escalated: tickets.filter((t) => t.isEscalated).length,
+      resolved: tickets.filter((t) => t.status === 'Resolved' || t.status === 'Closed').length,
+    };
+    const view = active === 'escalated' ? tickets.filter((t) => t.isEscalated)
+      : active === 'resolved' ? tickets.filter((t) => t.status === 'Resolved' || t.status === 'Closed')
+      : tickets;
+
+    const [navTitle, navSub] = NAV_TITLES[active];
+
+    function content() {
+      if (booting) return <CenterMsg>Loading tickets…</CenterMsg>;
+      if (loadError) return <CenterMsg onRetry={loadData}>Couldn’t load tickets: {loadError}</CenterMsg>;
+      if (active === 'agents' || active === 'reports') return <Placeholder label={navTitle} />;
+      return <TicketInbox tickets={view} counts={counts} onOpen={openTicket} />;
+    }
+
+    return (
+      <>
+        <Sidebar active={active} onNavigate={(k) => { setActive(k); setSelected(null); }} counts={counts} user={user} onLogout={onLogout} />
+        <div className="main">
+          <Topbar title={navTitle} subtitle={navSub} onNew={() => setModal(true)} />
+          <div className="content">
+            {content()}
+            <TicketDetail key={selected ? selected.id : 'none'} ticket={selected} comments={commentMap} agents={agents}
+              onClose={() => setSelected(null)} onReply={reply} onAssign={onAssign} onStatus={onStatus} />
+          </div>
+        </div>
+        <NewTicketModal open={modal} onClose={() => setModal(false)} onCreate={create} />
+        {flash && <div className="flash">{flash}</div>}
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!-- @dsCard group="Agent Console" viewport="1280x800" name="Agent Console" subtitle="Ticket inbox, detail slide-over & reply composer" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HelpDesk — Agent Console</title>
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: var(--bg); font-family: var(--font-sans); color: var(--text-body); }
+  #app { height: 100vh; display: flex; overflow: hidden; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .content { flex: 1; min-width: 0; position: relative; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script>window.DS = window.HelpDeskDesignSystem_35c226;</script>
+<script src="data.js"></script>
+<script type="text/babel" src="util.jsx"></script>
+<script type="text/babel" src="Sidebar.jsx"></script>
+<script type="text/babel" src="Topbar.jsx"></script>
+<script type="text/babel" src="TicketInbox.jsx"></script>
+<script type="text/babel" src="TicketDetail.jsx"></script>
+<script type="text/babel">
+  const { Button, Input, Select, Textarea, Card } = window.DS;
+
+  function NewTicketModal({ open, onClose, onCreate }) {
+    const [title, setTitle] = React.useState('');
+    const [category, setCategory] = React.useState('Network');
+    const [priority, setPriority] = React.useState('Medium');
+    const [desc, setDesc] = React.useState('');
+    if (!open) return null;
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(34,28,24,0.38)' }} />
+        <Card padding="none" style={{ position: 'relative', width: 520, maxWidth: '92%', boxShadow: 'var(--shadow-xl)' }}>
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <h2 style={{ font: 'var(--font-h2)', margin: 0, color: 'var(--text-strong)' }}>New ticket</h2>
+          </div>
+          <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Input label="Subject" placeholder="Briefly describe the issue" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Select label="Category" containerStyle={{ flex: 1 }} options={['Network', 'Hardware', 'Account', 'Billing', 'General']} value={category} onChange={(e) => setCategory(e.target.value)} />
+              <Select label="Priority" containerStyle={{ flex: 1 }} options={['Low', 'Medium', 'High', 'Urgent']} value={priority} onChange={(e) => setPriority(e.target.value)} />
+            </div>
+            <Textarea label="Description" rows={4} placeholder="What happened? What did you expect?" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
+          <div style={{ padding: 16, borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" icon="plus" disabled={!title.trim()} onClick={() => { onCreate({ title, category, priority, description: desc }); onClose(); }}>Create ticket</Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const NAV_TITLES = {
+    inbox: ['Inbox', 'All tickets across your team'],
+    escalated: ['Escalated', 'Tickets that breached their SLA'],
+    resolved: ['Resolved', 'Recently resolved & closed'],
+    agents: ['Agents', 'Your support team'],
+    reports: ['Reports', 'SLA performance & volume'],
+  };
+
+  function App() {
+    const seed = window.KIT_DATA;
+    const [active, setActive] = React.useState('inbox');
+    const [tickets, setTickets] = React.useState(seed.tickets);
+    const [comments, setComments] = React.useState(seed.comments);
+    const [selected, setSelected] = React.useState(null);
+    const [modal, setModal] = React.useState(false);
+
+    React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
+
+    const counts = React.useMemo(() => ({
+      all: tickets.length,
+      open: tickets.filter((t) => t.status === 'Open').length,
+      inprogress: tickets.filter((t) => t.status === 'InProgress').length,
+      escalated: tickets.filter((t) => t.isEscalated).length,
+      resolved: tickets.filter((t) => t.status === 'Resolved').length,
+    }), [tickets]);
+
+    const view = active === 'escalated' ? tickets.filter((t) => t.isEscalated)
+      : active === 'resolved' ? tickets.filter((t) => t.status === 'Resolved' || t.status === 'Closed')
+      : tickets;
+
+    function reply(ticketId, body, isInternal) {
+      setComments((prev) => ({
+        ...prev,
+        [ticketId]: [...(prev[ticketId] || []), {
+          id: Date.now(), author: seed.agents[0], body, isInternal, createdAt: Date.now(),
+        }],
+      }));
+    }
+    function create({ title, category, priority, description }) {
+      const id = Math.max(...tickets.map((t) => t.id)) + 1;
+      const slaHours = { Urgent: 1, High: 4, Medium: 24, Low: 72 }[priority];
+      setTickets((prev) => [{
+        id, title, category, priority, description, status: 'Open',
+        createdBy: { id: 99, fullName: 'You (Agent)', email: 'agent@helpdesk.local', role: 'Agent' },
+        assignedAgent: null, createdAt: Date.now(), updatedAt: Date.now(),
+        slaDueAt: Date.now() + slaHours * 3.6e6, isEscalated: false, isSlaBreached: false,
+      }, ...prev]);
+      setActive('inbox');
+    }
+
+    const [navTitle, navSub] = NAV_TITLES[active];
+    return (
+      <>
+        <Sidebar active={active} onNavigate={setActive} counts={counts} />
+        <div className="main">
+          <Topbar title={navTitle} subtitle={navSub} onNew={() => setModal(true)} />
+          <div className="content">
+            <TicketInbox tickets={view} counts={counts} onOpen={setSelected} />
+            <TicketDetail ticket={selected} comments={comments} onClose={() => setSelected(null)} onReply={reply} />
+          </div>
+        </div>
+        <NewTicketModal open={modal} onClose={() => setModal(false)} onCreate={create} />
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+</script>
+</body>
+</html>

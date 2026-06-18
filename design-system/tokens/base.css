@@ -1,0 +1,20 @@
+/* ============================================================
+   BASE — light resets so specimens & kits render consistently.
+   Scoped lightly; does not aggressively override consumer styles.
+   ============================================================ */
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-body);
+  background: var(--surface-app);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }

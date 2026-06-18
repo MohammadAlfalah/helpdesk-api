@@ -1,0 +1,54 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Feedback — Badge, Avatar, Toast" subtitle="Labels, identity & notifications" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; background: var(--bg); font-family: var(--font-sans); }
+  .wrap { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--text-muted); width: 100%; }
+</style>
+</head>
+<body>
+<div id="root" class="wrap"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { Badge, Avatar, Toast } = window.HelpDeskDesignSystem_35c226;
+  function Demo() {
+    React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
+    return (
+      <>
+        <div className="row">
+          <span className="lbl">Badges</span>
+          <Badge tone="brand">Network</Badge>
+          <Badge tone="neutral" dot>12 open</Badge>
+          <Badge tone="info">Account</Badge>
+          <Badge tone="success" icon="check">Resolved</Badge>
+          <Badge tone="warning">Due soon</Badge>
+          <Badge tone="danger" icon="flame">Breached</Badge>
+        </div>
+        <div className="row">
+          <span className="lbl">Avatars</span>
+          <Avatar name="Dana Okafor" role="Agent" />
+          <Avatar name="Sam Liu" />
+          <Avatar name="Priya Raman" size="sm" />
+          <Avatar name="Marcus Hale" role="Agent" size="lg" />
+        </div>
+        <div className="row">
+          <span className="lbl">Toast</span>
+          <Toast kind="success" title="Ticket resolved" onDismiss={() => {}}>Ticket #2044 was marked resolved.</Toast>
+          <Toast kind="danger" title="SLA breached">Ticket #2047 is past its due time.</Toast>
+        </div>
+      </>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

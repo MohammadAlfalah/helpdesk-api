@@ -24,8 +24,37 @@ Swagger, a unit + integration test suite, CI, and a one-command Docker setup.
 
 ---
 
+## Web agent console
+
+The API also **serves its own web agent console** from `wwwroot` at the site root —
+so one deployment is both the REST API *and* its UI. Sign in as an agent and you get a
+live ticket inbox built entirely on the real endpoints: filter tickets, open one in a
+slide-over to read the comment thread, post **public replies or internal notes**,
+**reassign**, **change status**, and **raise new tickets** — every action hits the API
+and persists.
+
+It's built from the bundled **HelpDesk Design System** (in [`design-system/`](design-system/)) —
+a warm, terracotta-themed component library and styleguide — rendered with **no build step**
+(React + Babel in the browser) so the whole UI is just static files the API hands out.
+
+Run the app (`docker compose up`, or `dotnet run` from `HelpDesk.Api`) and open the site
+root in your browser, e.g. **<http://localhost:8080/>** (Swagger stays at `/swagger`). Sign
+in with the seeded agent:
+
+| Email | Password | Role |
+|---|---|---|
+| `agent@helpdesk.local` | `Agent#12345` | Agent (sees & manages all tickets) |
+| `customer@helpdesk.local` | `Customer#12345` | Customer (own tickets only) |
+
+The database is seeded on first run with a handful of realistic tickets (open, in
+progress, escalated, resolved) and comment threads, so the console has data to show
+immediately — including a couple the SLA job escalates as soon as it runs.
+
+---
+
 ## Features
 
+- **Web agent console** — a polished, terracotta-themed ticket inbox served from the API itself (login, filters, ticket detail slide-over, comment thread, replies & internal notes, assignment, status, new-ticket modal), built on the HelpDesk Design System. See above.
 - **Tickets** — create, list, view, update, assign, delete; status (`Open → InProgress → Resolved → Closed`), priority (`Low/Medium/High/Urgent`) and category.
 - **Role-based auth (JWT)** — two roles, **agent** and **customer**. Customers only ever see and comment on their *own* tickets; agents see and manage everything.
 - **Comments** with **internal agent-only notes** that are never returned to customers.

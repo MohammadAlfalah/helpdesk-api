@@ -6,6 +6,7 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -104,12 +105,22 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseExceptionHandler(); // ProblemDetails for unhandled exceptions
+
+// Serve the web agent console from wwwroot. The console's screens are .jsx files
+// compiled in-browser by Babel; the static-file middleware only serves known
+// extensions, so register .jsx as a text type or those requests would 404.
+var staticTypes = new FileExtensionContentTypeProvider();
+staticTypes.Mappings[".jsx"] = "text/jsx";
+app.UseDefaultFiles();                        // "/" -> /index.html
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = staticTypes });
+
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" })).AllowAnonymous();
+app.MapFallbackToFile("index.html");          // serve the console for non-API routes
 
 app.Run();
 

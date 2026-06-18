@@ -1,0 +1,4 @@
+/* Webfonts. Inter (UI sans) + JetBrains Mono (ticket IDs, code/meta).
+   NOTE: served from Google Fonts. No font binaries shipped in the source repo —
+   flagged to the user as a substitution. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600&display=swap");

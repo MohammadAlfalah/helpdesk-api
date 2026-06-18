@@ -1,0 +1,30 @@
+<!-- @dsCard group="Brand" viewport="700x170" name="Iconography — Lucide" subtitle="1.75px stroke, rounded caps; sized 18–20px in UI" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" /><link rel="stylesheet" href="../styles.css" />
+<style>
+  body{margin:0;background:var(--surface-card);font-family:var(--font-sans);color:var(--text-strong)}
+  .wrap{padding:24px;display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;gap:22px;flex-wrap:wrap}
+  .ic{display:flex;flex-direction:column;align-items:center;gap:7px;width:64px}
+  .ic i{color:var(--terracotta-600)}
+  .ic span{font-size:11px;color:var(--text-muted);font-family:var(--font-mono)}
+  .note{font-size:12px;color:var(--text-muted)}
+</style></head>
+<body><div class="wrap">
+  <div class="row">
+    <div class="ic"><i data-lucide="ticket" width="24" height="24"></i><span>ticket</span></div>
+    <div class="ic"><i data-lucide="inbox" width="24" height="24"></i><span>inbox</span></div>
+    <div class="ic"><i data-lucide="alert-triangle" width="24" height="24"></i><span>alert</span></div>
+    <div class="ic"><i data-lucide="clock" width="24" height="24"></i><span>clock</span></div>
+    <div class="ic"><i data-lucide="message-square" width="24" height="24"></i><span>comment</span></div>
+    <div class="ic"><i data-lucide="user-round" width="24" height="24"></i><span>agent</span></div>
+    <div class="ic"><i data-lucide="check-circle-2" width="24" height="24"></i><span>resolve</span></div>
+    <div class="ic"><i data-lucide="search" width="24" height="24"></i><span>search</span></div>
+    <div class="ic"><i data-lucide="filter" width="24" height="24"></i><span>filter</span></div>
+    <div class="ic"><i data-lucide="settings" width="24" height="24"></i><span>settings</span></div>
+  </div>
+  <div class="note">Lucide icon set, loaded from CDN. Stroke 1.75px, rounded line caps. Tinted with currentColor — usually <code>--text-muted</code> or <code>--terracotta-600</code>.</div>
+</div>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });</script>
+</body></html>

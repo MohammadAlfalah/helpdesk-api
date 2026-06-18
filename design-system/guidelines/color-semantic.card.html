@@ -1,0 +1,31 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Status & priority — semantic mapping" subtitle="How ticket states map to color" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" /><link rel="stylesheet" href="../styles.css" />
+<style>
+  body{margin:0;background:var(--bg);font-family:var(--font-sans);color:var(--text-strong)}
+  .wrap{padding:20px;display:flex;gap:28px}
+  .col{display:flex;flex-direction:column;gap:8px}
+  .h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:var(--tracking-caps);color:var(--text-muted)}
+  .pill{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:var(--radius-full);font-size:13px;font-weight:600;width:fit-content}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+</style></head>
+<body><div class="wrap">
+  <div class="col"><span class="h">Status</span>
+    <span class="pill" style="background:var(--status-open-bg);color:var(--status-open-fg)"><i class="dot"></i>Open</span>
+    <span class="pill" style="background:var(--status-inprogress-bg);color:var(--status-inprogress-fg)"><i class="dot"></i>In progress</span>
+    <span class="pill" style="background:var(--status-resolved-bg);color:var(--status-resolved-fg)"><i class="dot"></i>Resolved</span>
+    <span class="pill" style="background:var(--status-closed-bg);color:var(--status-closed-fg)"><i class="dot"></i>Closed</span>
+  </div>
+  <div class="col"><span class="h">Priority</span>
+    <span class="pill" style="background:var(--prio-low-bg);color:var(--prio-low-fg)">Low</span>
+    <span class="pill" style="background:var(--prio-medium-bg);color:var(--prio-medium-fg)">Medium</span>
+    <span class="pill" style="background:var(--prio-high-bg);color:var(--prio-high-fg)">High</span>
+    <span class="pill" style="background:var(--prio-urgent-bg);color:var(--prio-urgent-fg)">Urgent</span>
+  </div>
+  <div class="col"><span class="h">SLA</span>
+    <span class="pill" style="background:var(--green-100);color:var(--green-600)"><i class="dot"></i>Within SLA</span>
+    <span class="pill" style="background:var(--amber-100);color:var(--amber-600)"><i class="dot"></i>Due soon</span>
+    <span class="pill" style="background:var(--red-100);color:var(--red-500)"><i class="dot"></i>Breached</span>
+    <span class="pill" style="background:var(--red-100);color:var(--red-500)">▲ Escalated</span>
+  </div>
+</div></body></html>

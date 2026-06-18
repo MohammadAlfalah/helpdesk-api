@@ -1,0 +1,19 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Radii & elevation" subtitle="Rounded corners and soft warm shadows" -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" /><link rel="stylesheet" href="../styles.css" />
+<style>
+  body{margin:0;background:var(--bg);font-family:var(--font-sans);color:var(--text-strong)}
+  .wrap{padding:24px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .box{width:84px;height:64px;background:var(--surface-card);border:1px solid var(--border-subtle);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px}
+  .t{font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
+  .grp{display:flex;flex-direction:column;align-items:center;gap:8px}
+</style></head>
+<body><div class="wrap">
+  <div class="grp"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="t">sm·6</span></div>
+  <div class="grp"><div class="box" style="border-radius:var(--radius-md)"></div><span class="t">md·10</span></div>
+  <div class="grp"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="t">lg·14</span></div>
+  <div class="grp"><div class="box" style="border-radius:var(--radius-xl)"></div><span class="t">xl·20</span></div>
+  <div class="grp"><div class="box" style="border:none;border-radius:var(--radius-md);box-shadow:var(--shadow-sm)"></div><span class="t">sm</span></div>
+  <div class="grp"><div class="box" style="border:none;border-radius:var(--radius-md);box-shadow:var(--shadow-md)"></div><span class="t">md</span></div>
+  <div class="grp"><div class="box" style="border:none;border-radius:var(--radius-md);box-shadow:var(--shadow-lg)"></div><span class="t">lg</span></div>
+</div></body></html>
