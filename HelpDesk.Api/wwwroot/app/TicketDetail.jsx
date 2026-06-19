@@ -134,9 +134,29 @@ function TicketDetail({ ticket, comments, agents = [], canManage = true,
           <Textarea rows={2}
             placeholder={internal ? 'Add an internal note (agents only)…' : (canManage ? 'Reply to the customer…' : 'Add a reply…')}
             value={draft} onChange={(e) => setDraft(e.target.value)}
-            style={internal ? { background: 'var(--amber-100)', borderColor: 'transparent' } : undefined} />
+            style={internal ? { background: 'var(--amber-100)', border: '1px solid transparent' } : undefined} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {canManage && <Checkbox label="Internal note" checked={internal} onChange={() => setInternal(!internal)} />}
+            {canManage && (
+              // Custom toggle (not the DS Checkbox): its checkmark is an inline <svg>
+              // React owns, so lucide.createIcons() never swaps the node out from under
+              // React — toggling off no longer crashes the render.
+              <span role="checkbox" tabIndex={0} aria-checked={internal} aria-label="Internal note"
+                onClick={() => setInternal((v) => !v)}
+                onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setInternal((v) => !v); } }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 9, cursor: 'pointer', userSelect: 'none', fontSize: 'var(--text-base)', color: 'var(--text-body)', outline: 'none' }}>
+                <span style={{
+                  width: 19, height: 19, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: 'var(--radius-xs, 5px)', transition: 'background 120ms ease, border-color 120ms ease',
+                  background: internal ? 'var(--brand)' : 'var(--surface-card)',
+                  border: `1px solid ${internal ? 'var(--brand)' : 'var(--border-strong)'}`,
+                }}>
+                  {internal && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  )}
+                </span>
+                Internal note
+              </span>
+            )}
             <div style={{ flex: 1 }} />
             <Button variant="ghost" onClick={onClose}>Close</Button>
             <Button variant="primary" icon="send" disabled={!draft.trim()}

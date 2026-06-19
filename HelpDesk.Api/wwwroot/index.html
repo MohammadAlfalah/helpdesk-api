@@ -140,7 +140,27 @@
       : <CustomerApp user={user} onLogout={onLogout} />;
   }
 
-  ReactDOM.createRoot(document.getElementById('app')).render(<Root />);
+  // Catch any unhandled render error so the app degrades to a friendly "reload"
+  // prompt instead of a blank white screen.
+  class ErrorBoundary extends React.Component {
+    constructor(props) { super(props); this.state = { error: null }; }
+    static getDerivedStateFromError(error) { return { error }; }
+    componentDidCatch(error, info) { console.error('HelpDesk UI error:', error, info); }
+    render() {
+      if (this.state.error) {
+        return (
+          <div className="center-msg" style={{ height: '100vh' }}>
+            <div style={{ font: 'var(--font-h3)', color: 'var(--text-strong)' }}>Something went wrong</div>
+            <div style={{ font: 'var(--font-small)', color: 'var(--text-muted)' }}>Please reload the page to continue.</div>
+            <Button variant="primary" onClick={() => location.reload()}>Reload</Button>
+          </div>
+        );
+      }
+      return this.props.children;
+    }
+  }
+
+  ReactDOM.createRoot(document.getElementById('app')).render(<ErrorBoundary><Root /></ErrorBoundary>);
 </script>
 </body>
 </html>
