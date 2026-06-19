@@ -97,15 +97,26 @@ public static class SeedData
             "The standard signature template is not being pushed to anyone in the sales team Outlook.",
             TicketStatus.Closed, TicketPriority.Low, lena, marcus, createdHoursAgo: 96, updatedHoursAgo: 80, resolvedHoursAgo: 82);
 
-        db.Tickets.AddRange(vpn, pwd, printer, billing, laptop, signature);
+        // Two tickets for the documented demo CUSTOMER, so the customer portal has
+        // data to show when you sign in as customer@helpdesk.local.
+        var demoWifi = Make("Laptop won't connect to office Wi-Fi", "Network",
+            "Since this morning my laptop won't join the office Wi-Fi — other devices connect fine and I've restarted twice.",
+            TicketStatus.InProgress, TicketPriority.High, demo, dana, createdHoursAgo: 3, updatedHoursAgo: 1);
 
-        // ---- Comment threads on the two most active tickets ----
+        var demoAccess = Make("Request access to the shared Finance drive", "Account",
+            "I've moved to the finance team and need read/write access to the shared Finance drive. My manager has approved.",
+            TicketStatus.Open, TicketPriority.Low, demo, null, createdHoursAgo: 28, updatedHoursAgo: 28);
+
+        db.Tickets.AddRange(vpn, pwd, printer, billing, laptop, signature, demoWifi, demoAccess);
+
+        // ---- Comment threads ----
         db.Comments.AddRange(
             new Comment { Ticket = vpn, Author = sam, Body = "It just dropped again while I was on a call. Really disruptive.", IsInternal = false, CreatedAt = now.AddHours(-1.5) },
             new Comment { Ticket = vpn, Author = dana, Body = "Thanks Sam — taking a look now. Can you confirm which VPN gateway you connect to?", IsInternal = false, CreatedAt = now.AddHours(-1) },
             new Comment { Ticket = vpn, Author = dana, Body = "Gateway GW-2 was flapping after the maintenance window. Escalating to the network team.", IsInternal = true, CreatedAt = now.AddMinutes(-40) },
             new Comment { Ticket = pwd, Author = rosa, Body = "Still cannot get in. This is now blocking my whole morning.", IsInternal = false, CreatedAt = now.AddHours(-2) },
-            new Comment { Ticket = pwd, Author = marcus, Body = "SLA breached — token TTL was misconfigured. Pushing a fix and will reset her link manually.", IsInternal = true, CreatedAt = now.AddMinutes(-50) }
+            new Comment { Ticket = pwd, Author = marcus, Body = "SLA breached — token TTL was misconfigured. Pushing a fix and will reset her link manually.", IsInternal = true, CreatedAt = now.AddMinutes(-50) },
+            new Comment { Ticket = demoWifi, Author = dana, Body = "Thanks for flagging this — I've reset your Wi-Fi profile on our side. Could you forget the network on your laptop and reconnect, then let me know if it holds?", IsInternal = false, CreatedAt = now.AddMinutes(-55) }
         );
 
         await db.SaveChangesAsync();

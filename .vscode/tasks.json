@@ -1,0 +1,38 @@
+{
+    // Tasks that F5 / the Run button depend on. See .vscode/launch.json.
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "detail": "Compile HelpDesk.Api.",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/HelpDesk.Api/HelpDesk.Api.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "start-db",
+            "detail": "Start the PostgreSQL container and wait until it accepts connections.",
+            "type": "process",
+            "command": "docker",
+            "args": ["compose", "up", "-d", "--wait", "db"],
+            "problemMatcher": []
+        },
+        {
+            "label": "dev: prepare",
+            "detail": "Start Postgres, then build the API. Used as the F5 preLaunchTask.",
+            "dependsOn": ["start-db", "build"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+    ]
+}

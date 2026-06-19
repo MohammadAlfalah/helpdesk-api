@@ -24,39 +24,49 @@ Swagger, a unit + integration test suite, CI, and a one-command Docker setup.
 
 ---
 
-## Web agent console
+## Web app — a two-sided helpdesk
 
-The API also **serves its own web agent console** from `wwwroot` at the site root —
-so one deployment is both the REST API *and* its UI. Sign in as an agent and you get a
-live ticket inbox built entirely on the real endpoints: filter tickets, open one in a
-slide-over to read the comment thread, post **public replies or internal notes**,
-**reassign**, **change status**, and **raise new tickets** — every action hits the API
-and persists.
+The API **serves its own web app** from `wwwroot` at the site root — so one deployment is
+both the REST API *and* its UI. After sign-in it's **role-aware**: agents get a full support
+console, customers get a focused self-service portal. Every action hits the real API and
+persists.
+
+**Agent console** — a live inbox with **search**, **sort** (newest / oldest / SLA-due /
+priority), status filters and an **"assigned to me"** view; a ticket **slide-over** to read
+the conversation, post **public replies or internal notes**, **assign**, change
+**status / priority / category**, **resolve / close / reopen**, and **delete**; an **Agents**
+page (team + live workload) and a **Reports** dashboard (SLA compliance %, volume, and
+status / priority / category / per-agent breakdowns). Keyboard: `/` search, `n` new, `Esc` close.
 
 ![HelpDesk agent console — the ticket inbox](docs/console.png)
+![HelpDesk reports dashboard — SLA performance & volume](docs/reports.png)
+
+**Customer portal** — customers **register** or sign in and get a clean *"My tickets"* view:
+raise a ticket, track its status and SLA, read the agent's replies, and reply back. They only
+ever see their **own** tickets and never internal notes — enforced by the API, not just hidden
+in the UI.
+
+![HelpDesk customer portal — my tickets](docs/customer.png)
 
 It's built from the bundled **HelpDesk Design System** (in [`design-system/`](design-system/)) —
 a warm, terracotta-themed component library and styleguide — rendered with **no build step**
-(React + Babel in the browser) so the whole UI is just static files the API hands out.
+(React + Babel in the browser), so the whole UI is just static files the API hands out.
 
-Run the app (`docker compose up`, or `dotnet run` from `HelpDesk.Api`) and open the site
-root in your browser, e.g. **<http://localhost:8080/>** (Swagger stays at `/swagger`). Sign
-in with the seeded agent:
+Run the app (`docker compose up`, or `dotnet run` from `HelpDesk.Api`) and open the site root,
+e.g. **<http://localhost:8090/>** (Swagger stays at `/swagger`). The database is seeded on first
+run with realistic tickets and comment threads (including a couple the SLA job escalates
+immediately), so both sides have data to show. Sign in — or register a new customer:
 
 | Email | Password | Role |
 |---|---|---|
-| `agent@helpdesk.local` | `Agent#12345` | Agent (sees & manages all tickets) |
-| `customer@helpdesk.local` | `Customer#12345` | Customer (own tickets only) |
-
-The database is seeded on first run with a handful of realistic tickets (open, in
-progress, escalated, resolved) and comment threads, so the console has data to show
-immediately — including a couple the SLA job escalates as soon as it runs.
+| `agent@helpdesk.local` | `Agent#12345` | Agent — full console (all tickets, triage, reports) |
+| `customer@helpdesk.local` | `Customer#12345` | Customer — portal (own tickets only) |
 
 ---
 
 ## Features
 
-- **Web agent console** — a polished, terracotta-themed ticket inbox served from the API itself (login, filters, ticket detail slide-over, comment thread, replies & internal notes, assignment, status, new-ticket modal), built on the HelpDesk Design System. See above.
+- **Two-sided web app** — a polished, terracotta-themed UI served from the API itself: a role-aware **agent console** (search, sort, filters, "assigned to me", a ticket slide-over with full triage — assign / status / priority / category / resolve / close / delete — plus an **Agents** workload page and an **SLA Reports** dashboard) and a self-service **customer portal** (register, raise & track your own tickets, reply). Built on the HelpDesk Design System, no build step. See above.
 - **Tickets** — create, list, view, update, assign, delete; status (`Open → InProgress → Resolved → Closed`), priority (`Low/Medium/High/Urgent`) and category.
 - **Role-based auth (JWT)** — two roles, **agent** and **customer**. Customers only ever see and comment on their *own* tickets; agents see and manage everything.
 - **Comments** with **internal agent-only notes** that are never returned to customers.
@@ -110,7 +120,7 @@ they can be unit-tested without a web server.
 docker compose up --build
 ```
 
-Swagger is then at **http://localhost:8080/swagger**. The database is created and
+Swagger is then at **http://localhost:8090/swagger**. The database is created and
 migrated automatically, and two accounts are seeded.
 
 ### Option B — Run locally
@@ -181,7 +191,7 @@ The response is `{ items, page, pageSize, totalCount, totalPages, hasNextPage, h
 ### Quick walkthrough
 
 ```bash
-BASE=http://localhost:8080
+BASE=http://localhost:8090
 
 # Log in as the seeded agent
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \

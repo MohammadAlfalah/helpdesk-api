@@ -20,6 +20,7 @@ function StatTile({ icon, label, value, tone }) {
 
 function TicketRow({ t, onOpen }) {
   const { Card, StatusBadge, PriorityBadge, SlaIndicator, Avatar, Badge } = window.DS;
+  const by = t.createdBy || { fullName: 'Unknown' };
   return (
     <Card interactive padding="none" onClick={() => onOpen(t)} style={{ padding: '14px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -29,8 +30,8 @@ function TicketRow({ t, onOpen }) {
             <span style={{ font: 'var(--font-h3)', color: 'var(--text-strong)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, font: 'var(--font-small)', color: 'var(--text-muted)' }}>
-            <Avatar name={t.createdBy.fullName} size="xs" />
-            <span>{t.createdBy.fullName}</span>
+            <Avatar name={by.fullName} size="xs" />
+            <span>{by.fullName}</span>
             <span>·</span>
             <Badge tone="neutral" size="sm">{t.category}</Badge>
             <span>·</span>
@@ -52,8 +53,8 @@ function TicketRow({ t, onOpen }) {
   );
 }
 
-function TicketInbox({ tickets, counts, onOpen }) {
-  const { Badge } = window.DS;
+function TicketInbox({ tickets, counts, onOpen, sort, onSort, mineOnly, onMineOnly, canMine, searching, query }) {
+  const { Select } = window.DS;
   const [filter, setFilter] = React.useState('All');
   const filters = ['All', 'Open', 'In progress', 'Escalated', 'Resolved'];
   const shown = tickets.filter((t) => {
@@ -67,14 +68,14 @@ function TicketInbox({ tickets, counts, onOpen }) {
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 22, overflow: 'auto', height: '100%', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', gap: 14 }}>
+      <div className="stat-row" style={{ display: 'flex', gap: 14 }}>
         <StatTile icon="inbox" label="Open tickets" value={counts.open} tone={{ bg: 'var(--terracotta-50)', fg: 'var(--terracotta-600)' }} />
         <StatTile icon="loader" label="In progress" value={counts.inprogress} tone={{ bg: 'var(--blue-100)', fg: 'var(--blue-600)' }} />
         <StatTile icon="alert-triangle" label="Escalated" value={counts.escalated} tone={{ bg: 'var(--red-100)', fg: 'var(--red-500)' }} />
-        <StatTile icon="check-circle-2" label="Resolved today" value={counts.resolved} tone={{ bg: 'var(--green-100)', fg: 'var(--green-600)' }} />
+        <StatTile icon="check-circle-2" label="Resolved" value={counts.resolved} tone={{ bg: 'var(--green-100)', fg: 'var(--green-600)' }} />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {filters.map((f) => {
           const on = filter === f;
           return (
@@ -88,11 +89,33 @@ function TicketInbox({ tickets, counts, onOpen }) {
             }}>{f}</button>
           );
         })}
+        <div style={{ flex: 1 }} />
+        {canMine && (
+          <button onClick={onMineOnly} title="Show only tickets assigned to me" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 'var(--radius-full)', cursor: 'pointer',
+            border: `1px solid ${mineOnly ? 'transparent' : 'var(--border)'}`,
+            background: mineOnly ? 'var(--brand-soft)' : 'var(--surface-card)',
+            color: mineOnly ? 'var(--brand-soft-fg)' : 'var(--text-body)',
+            font: 'var(--weight-medium) var(--text-sm)/1 var(--font-sans)', transition: 'all 120ms ease',
+          }}>
+            <Icon name="user-round" size={15} color={mineOnly ? 'var(--brand)' : 'var(--text-muted)'} /> Assigned to me
+          </button>
+        )}
+        {onSort && (
+          <Select size="sm" containerStyle={{ width: 150 }} value={sort} onChange={(e) => onSort(e.target.value)}
+            options={[{ value: 'newest', label: 'Sort: Newest' }, { value: 'oldest', label: 'Sort: Oldest' }, { value: 'sla', label: 'Sort: SLA due' }, { value: 'priority', label: 'Sort: Priority' }]} />
+        )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {shown.map((t) => <TicketRow key={t.id} t={t} onOpen={onOpen} />)}
-      </div>
+      {shown.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {shown.map((t) => <TicketRow key={t.id} t={t} onOpen={onOpen} />)}
+        </div>
+      ) : (
+        <EmptyState icon={searching ? 'search-x' : 'inbox'}
+          title={searching ? 'No tickets match your search' : 'Nothing here'}
+          subtitle={searching ? (query ? `No results for “${query}”.` : 'Try a different search or filter.') : 'No tickets in this view yet.'} />
+      )}
     </div>
   );
 }

@@ -1,8 +1,11 @@
 # Run the whole stack with:  docker compose up --build
-# Then open Swagger at http://localhost:8080/swagger
+# Then open Swagger at http://localhost:8090/swagger
 services:
   db:
     image: postgres:16-alpine
+    # Published so an app run locally (VS Code F5 / dotnet run) can reach Postgres at localhost:5432.
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -24,7 +27,7 @@ services:
       Jwt__Issuer: "HelpDeskApi"
       Jwt__Audience: "HelpDeskClient"
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_PORT:-8090}:8080"
     depends_on:
       db:
         condition: service_healthy

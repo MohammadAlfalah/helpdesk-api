@@ -1,16 +1,26 @@
-/* Ticket detail slide-over: meta, description, comment thread, reply composer. */
-function TicketDetail({ ticket, comments, agents = [], onClose, onReply, onAssign, onStatus }) {
+/* Ticket detail slide-over: meta, description, comment thread, reply composer.
+   Role-aware: agents (canManage) get assignment/status/priority/category controls,
+   quick actions, and delete; customers get a clean read-only view + public reply. */
+const TICKET_CATEGORIES = ['Network', 'Hardware', 'Account', 'Billing', 'General'];
+
+function TicketDetail({ ticket, comments, agents = [], canManage = true,
+  onClose, onReply, onAssign, onStatus, onPriority, onCategory, onDelete }) {
   const { Card, StatusBadge, PriorityBadge, SlaIndicator, Avatar, Badge, Button, Textarea, Select, IconButton, Checkbox } = window.DS;
   const [draft, setDraft] = React.useState('');
   const [internal, setInternal] = React.useState(false);
+  const dialogRef = window.useDialog(onClose);
+  React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
   if (!ticket) return null;
   const list = comments[ticket.id] || [];
+  const closed = ticket.status === 'Resolved' || ticket.status === 'Closed';
+  const creator = ticket.createdBy || { fullName: 'Unknown', email: '' };
 
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', justifyContent: 'flex-end' }}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="td-title" tabIndex={-1}
+      style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', justifyContent: 'flex-end', outline: 'none' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(34,28,24,0.32)' }} />
       <aside style={{
-        position: 'relative', width: 520, maxWidth: '92%', height: '100%', background: 'var(--bg)',
+        position: 'relative', width: 540, maxWidth: '94%', height: '100%', background: 'var(--bg)',
         boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column',
         animation: 'slideIn 220ms cubic-bezier(0.22,0.61,0.36,1)',
       }}>
@@ -20,7 +30,7 @@ function TicketDetail({ ticket, comments, agents = [], onClose, onReply, onAssig
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '20px 22px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-card)' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ font: 'var(--weight-medium) var(--text-xs)/1 var(--font-mono)', color: 'var(--text-faint)', marginBottom: 7 }}>#TK-{ticket.id}</div>
-            <h2 style={{ font: 'var(--font-h2)', color: 'var(--text-strong)', margin: 0 }}>{ticket.title}</h2>
+            <h2 id="td-title" style={{ font: 'var(--font-h2)', color: 'var(--text-strong)', margin: 0 }}>{ticket.title}</h2>
           </div>
           <IconButton icon="x" label="Close" onClick={onClose} />
         </div>
@@ -36,50 +46,82 @@ function TicketDetail({ ticket, comments, agents = [], onClose, onReply, onAssig
 
           <Card padding="md">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <Avatar name={ticket.createdBy.fullName} size="sm" />
+              <Avatar name={creator.fullName} size="sm" />
               <div style={{ flex: 1 }}>
-                <div style={{ font: 'var(--font-label)', color: 'var(--text-strong)' }}>{ticket.createdBy.fullName}</div>
-                <div style={{ font: 'var(--font-small)', color: 'var(--text-muted)' }}>{ticket.createdBy.email} · {timeAgo(ticket.createdAt)}</div>
+                <div style={{ font: 'var(--font-label)', color: 'var(--text-strong)' }}>{creator.fullName}</div>
+                <div style={{ font: 'var(--font-small)', color: 'var(--text-muted)' }}>{creator.email ? creator.email + ' · ' : ''}{timeAgo(ticket.createdAt)}</div>
               </div>
             </div>
-            <p style={{ font: 'var(--font-body)', color: 'var(--text-body)', margin: 0 }}>{ticket.description}</p>
+            <p style={{ font: 'var(--font-body)', color: 'var(--text-body)', margin: 0, whiteSpace: 'pre-wrap' }}>{ticket.description}</p>
           </Card>
 
-          {/* Assignment + status — these persist to the API */}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Select label="Assignee" containerStyle={{ flex: 1 }}
-              options={[{ value: '', label: 'Unassigned' }, ...agents.map((a) => ({ value: String(a.id), label: a.fullName }))]}
-              defaultValue={ticket.assignedAgent ? String(ticket.assignedAgent.id) : ''}
-              onChange={(e) => onAssign && onAssign(ticket.id, e.target.value)} />
-            <Select label="Status" containerStyle={{ flex: 1 }}
-              options={['Open', 'InProgress', 'Resolved', 'Closed']} defaultValue={ticket.status}
-              onChange={(e) => onStatus && onStatus(ticket.id, e.target.value)} />
-          </div>
+          {/* ---- Agent management controls ---- */}
+          {canManage && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Select label="Assignee" containerStyle={{ flex: 1 }}
+                  options={[{ value: '', label: 'Unassigned' }, ...agents.map((a) => ({ value: String(a.id), label: a.fullName }))]}
+                  defaultValue={ticket.assignedAgent ? String(ticket.assignedAgent.id) : ''}
+                  onChange={(e) => onAssign && onAssign(ticket.id, e.target.value)} />
+                <Select label="Status" containerStyle={{ flex: 1 }}
+                  options={['Open', 'InProgress', 'Resolved', 'Closed']} defaultValue={ticket.status}
+                  onChange={(e) => onStatus && onStatus(ticket.id, e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Select label="Priority" containerStyle={{ flex: 1 }}
+                  options={['Low', 'Medium', 'High', 'Urgent']} defaultValue={ticket.priority}
+                  onChange={(e) => onPriority && onPriority(ticket.id, e.target.value)} />
+                <Select label="Category" containerStyle={{ flex: 1 }}
+                  options={TICKET_CATEGORIES} defaultValue={ticket.category}
+                  onChange={(e) => onCategory && onCategory(ticket.id, e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {!closed ? (
+                  <>
+                    <Button size="sm" variant="soft" icon="check-circle-2" onClick={() => onStatus && onStatus(ticket.id, 'Resolved')}>Mark resolved</Button>
+                    <Button size="sm" variant="secondary" icon="archive" onClick={() => onStatus && onStatus(ticket.id, 'Closed')}>Close</Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="secondary" icon="rotate-ccw" onClick={() => onStatus && onStatus(ticket.id, 'InProgress')}>Reopen</Button>
+                )}
+                <div style={{ flex: 1 }} />
+                <Button size="sm" variant="ghost" icon="trash-2"
+                  style={{ color: 'var(--danger)' }}
+                  onClick={() => { if (window.confirm('Delete ticket #TK-' + ticket.id + '? This cannot be undone.')) onDelete && onDelete(ticket.id); }}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
 
-          {/* Comments */}
+          {/* ---- Conversation ---- */}
           <div>
             <div style={{ font: 'var(--font-label)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-caps)', fontSize: 11, marginBottom: 12 }}>
-              Activity · {list.length}
+              {canManage ? 'Activity' : 'Conversation'} · {list.length}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {list.map((c) => (
+              {list.map((c) => {
+                const a = c.author || { fullName: 'Unknown', role: 'Customer' };
+                return (
                 <div key={c.id} style={{ display: 'flex', gap: 10 }}>
-                  <Avatar name={c.author.fullName} role={c.author.role} size="sm" />
+                  <Avatar name={a.fullName} role={a.role} size="sm" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ font: 'var(--font-label)', color: 'var(--text-strong)' }}>{c.author.fullName}</span>
+                      <span style={{ font: 'var(--font-label)', color: 'var(--text-strong)' }}>{a.fullName}</span>
+                      {a.role === 'Agent' && <Badge tone="info" size="sm">Agent</Badge>}
                       {c.isInternal && <Badge tone="warning" size="sm" icon="lock">Internal</Badge>}
                       <span style={{ font: 'var(--font-small)', color: 'var(--text-faint)' }}>{timeAgo(c.createdAt)}</span>
                     </div>
                     <div style={{
-                      font: 'var(--font-body)', color: 'var(--text-body)',
+                      font: 'var(--font-body)', color: 'var(--text-body)', whiteSpace: 'pre-wrap',
                       background: c.isInternal ? 'var(--amber-100)' : 'var(--surface-card)',
                       border: `1px solid ${c.isInternal ? 'transparent' : 'var(--border-subtle)'}`,
                       borderRadius: 'var(--radius-md)', padding: '10px 13px',
                     }}>{c.body}</div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               {list.length === 0 && (
                 <div style={{ font: 'var(--font-small)', color: 'var(--text-faint)', padding: '8px 0' }}>No activity yet.</div>
               )}
@@ -89,16 +131,17 @@ function TicketDetail({ ticket, comments, agents = [], onClose, onReply, onAssig
 
         {/* Composer */}
         <div style={{ padding: 16, borderTop: '1px solid var(--border-subtle)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Textarea rows={2} placeholder={internal ? 'Add an internal note (agents only)…' : 'Reply to the customer…'}
+          <Textarea rows={2}
+            placeholder={internal ? 'Add an internal note (agents only)…' : (canManage ? 'Reply to the customer…' : 'Add a reply…')}
             value={draft} onChange={(e) => setDraft(e.target.value)}
             style={internal ? { background: 'var(--amber-100)', borderColor: 'transparent' } : undefined} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <Checkbox label="Internal note" checked={internal} onChange={() => setInternal(!internal)} />
+            {canManage && <Checkbox label="Internal note" checked={internal} onChange={() => setInternal(!internal)} />}
             <div style={{ flex: 1 }} />
             <Button variant="ghost" onClick={onClose}>Close</Button>
             <Button variant="primary" icon="send" disabled={!draft.trim()}
               onClick={() => { onReply(ticket.id, draft, internal); setDraft(''); setInternal(false); }}>
-              {internal ? 'Add note' : 'Send reply'}
+              {internal ? 'Add note' : (canManage ? 'Send reply' : 'Send')}
             </Button>
           </div>
         </div>
@@ -106,4 +149,4 @@ function TicketDetail({ ticket, comments, agents = [], onClose, onReply, onAssig
     </div>
   );
 }
-Object.assign(window, { TicketDetail });
+Object.assign(window, { TicketDetail, TICKET_CATEGORIES });

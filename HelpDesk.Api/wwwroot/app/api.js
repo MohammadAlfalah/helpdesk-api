@@ -56,16 +56,26 @@ window.HelpDeskApi = (function () {
   }
 
   // ---- auth ----
-  async function login(email, password) {
-    const r = await request('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+  async function getMe() { return request('/api/users/me'); }
+
+  // Store the token + user from a login/register response, then enrich with the
+  // user id (login/register don't return it) so the UI can do "assign to me" etc.
+  async function persistAuth(r) {
     token = r.token;
     user = { email: r.email, fullName: r.fullName, role: r.role };
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+    try {
+      const me = await getMe();
+      if (me && me.id != null) { user = { ...user, id: me.id }; localStorage.setItem(USER_KEY, JSON.stringify(user)); }
+    } catch { /* non-fatal */ }
     return user;
+  }
+  async function login(email, password) {
+    return persistAuth(await request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }));
+  }
+  async function register(email, fullName, password) {
+    return persistAuth(await request('/api/auth/register', { method: 'POST', body: JSON.stringify({ email, fullName, password }) }));
   }
   function logout() {
     token = null;
@@ -111,10 +121,13 @@ window.HelpDeskApi = (function () {
     });
     return mapTicket(r);
   }
+  async function deleteTicket(ticketId) {
+    return request('/api/tickets/' + ticketId, { method: 'DELETE' });
+  }
 
   return {
-    login, logout, currentUser, isAuthenticated,
+    login, register, logout, currentUser, isAuthenticated, getMe,
     getTickets, getComments, getAgents,
-    createTicket, addComment, updateTicket, assignTicket,
+    createTicket, addComment, updateTicket, assignTicket, deleteTicket,
   };
 })();
