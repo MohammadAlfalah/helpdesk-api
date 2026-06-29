@@ -6,99 +6,53 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-EF%20Core-4169E1?logo=postgresql&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-A **helpdesk / ticketing REST API** built with ASP.NET Core 10. Customers raise
-support tickets; agents triage, assign, comment on and resolve them. A background
-job watches every open ticket and **automatically escalates the ones that breach
-their SLA**.
+A ticketing REST API in ASP.NET Core 10. Customers raise support tickets; agents triage, assign, comment on and resolve them. A background job watches every open ticket and escalates the ones that breach their SLA.
 
-It's a clean, production-shaped backend: role-based JWT auth, a service layer,
-PostgreSQL via EF Core, pagination/filtering/sorting, RFC 7807 error responses,
-Swagger, a unit + integration test suite, CI, and a one-command Docker setup.
+I built this to have a backend project that goes past CRUD and shows the things real APIs actually need — role-scoped auth, a service layer I can unit-test without spinning up a web server, proper REST semantics, and a background worker doing useful work on a timer. The SLA escalation job is the part I cared most about getting right.
 
-> **🌐 Live demo:** **<https://helpdesk-api-9d3d.onrender.com/swagger>** — interactive Swagger UI.
-> Log in via `POST /api/auth/login` with the seeded agent (`agent@helpdesk.local` / `Agent#12345`),
-> click **Authorize**, paste `Bearer <token>`, and try the endpoints.
-> _(Hosted on Render's free tier, so the first request after it's been idle takes ~30 s to wake.)_
+It also serves its own web app, so the one deployment is both the API and a working UI you can click around in.
+
+**Live demo:** <https://helpdesk-api-9d3d.onrender.com/swagger> — log in via `POST /api/auth/login` with the seeded agent (`agent@helpdesk.local` / `Agent#12345`), hit **Authorize**, paste `Bearer <token>`, and try the endpoints. It's on Render's free tier, so the first request after it's been idle takes ~30s to wake up.
 
 [![HelpDesk API — Swagger UI](docs/swagger.png)](https://helpdesk-api-9d3d.onrender.com/swagger)
 
----
+## The web app
 
-## Web app — a two-sided helpdesk
-
-The API **serves its own web app** from `wwwroot` at the site root — so one deployment is
-both the REST API *and* its UI. After sign-in it's **role-aware**: agents get a full support
-console, customers get a focused self-service portal. Every action hits the real API and
-persists.
-
-**Agent console** — a live inbox with **search**, **sort** (newest / oldest / SLA-due /
-priority), status filters and an **"assigned to me"** view; a ticket **slide-over** to read
-the conversation, post **public replies or internal notes**, **assign**, change
-**status / priority / category**, **resolve / close / reopen**, and **delete**; an **Agents**
-page (team + live workload) and a **Reports** dashboard (SLA compliance %, volume, and
-status / priority / category / per-agent breakdowns). Keyboard: `/` search, `n` new, `Esc` close.
+The API hands its own UI out of `wwwroot` at the site root, and it's role-aware after sign-in. Agents get a support console — a live inbox with search, sort (newest / oldest / SLA-due / priority), status filters and an "assigned to me" view, plus a ticket slide-over to read the thread, post public replies or internal notes, assign, change status / priority / category, resolve / close / reopen / delete. There's also an Agents page (team + workload) and a Reports dashboard (SLA compliance %, volume, and breakdowns by status / priority / category / agent).
 
 ![HelpDesk agent console — the ticket inbox](docs/console.png)
 ![HelpDesk reports dashboard — SLA performance & volume](docs/reports.png)
 
-**Customer portal** — customers **register** or sign in and get a clean *"My tickets"* view:
-raise a ticket, track its status and SLA, read the agent's replies, and reply back. They only
-ever see their **own** tickets and never internal notes — enforced by the API, not just hidden
-in the UI.
+Customers get a self-service portal: register or sign in, raise a ticket, track its status and SLA, and reply to the agent. They only ever see their own tickets and never internal notes — and that's enforced by the API, not just hidden in the UI.
 
 ![HelpDesk customer portal — my tickets](docs/customer.png)
 
-It's built from the bundled **HelpDesk Design System** (in [`design-system/`](design-system/)) —
-a warm, terracotta-themed component library and styleguide — rendered with **no build step**
-(React + Babel in the browser), so the whole UI is just static files the API hands out.
+The front end is React + Babel running in the browser with no build step, styled from a small terracotta-themed design system I keep in [`design-system/`](design-system/). It's all static files, which kept the deploy simple.
 
-Run the app (`docker compose up`, or `dotnet run` from `HelpDesk.Api`) and open the site root,
-e.g. **<http://localhost:8090/>** (Swagger stays at `/swagger`). The database is seeded on first
-run with realistic tickets and comment threads (including a couple the SLA job escalates
-immediately), so both sides have data to show. Sign in — or register a new customer:
+## What's in it
 
-| Email | Password | Role |
-|---|---|---|
-| `agent@helpdesk.local` | `Agent#12345` | Agent — full console (all tickets, triage, reports) |
-| `customer@helpdesk.local` | `Customer#12345` | Customer — portal (own tickets only) |
+- **Tickets** — create, list, view, update, assign, delete. Status flows `Open → InProgress → Resolved → Closed`; priority is `Low/Medium/High/Urgent`; plus a category.
+- **JWT auth with two roles**, agent and customer. Customers are scoped to their own tickets; agents manage everything. Passwords are hashed with BCrypt.
+- **Comments**, including internal agent-only notes that are never returned to customers.
+- **SLA escalation background job** — a hosted `BackgroundService` periodically finds open tickets past their SLA due time, flags them as escalated, and bumps their priority a level.
+- **REST done properly** — resource routes, correct status codes (`201` + `Location`, `204`, `403`, `404`, `409`), DTOs, model validation, and RFC 7807 `ProblemDetails` error bodies.
+- **Pagination, filtering, search and sorting** on the ticket list, with paging metadata in the body and an `X-Pagination` header.
+- **Tests** — 19 unit tests on in-memory SQLite, plus 6 integration tests that hit the real HTTP API against a PostgreSQL container via Testcontainers (including a check that one customer can't reach another's tickets at the HTTP layer).
+- **CI + deploy** — GitHub Actions builds, tests, and builds the Docker image on every push; a `render.yaml` Blueprint provisions the API and a free Postgres in one go.
 
----
+## Stack
 
-## Features
-
-- **Two-sided web app** — a polished, terracotta-themed UI served from the API itself: a role-aware **agent console** (search, sort, filters, "assigned to me", a ticket slide-over with full triage — assign / status / priority / category / resolve / close / delete — plus an **Agents** workload page and an **SLA Reports** dashboard) and a self-service **customer portal** (register, raise & track your own tickets, reply). Built on the HelpDesk Design System, no build step. See above.
-- **Tickets** — create, list, view, update, assign, delete; status (`Open → InProgress → Resolved → Closed`), priority (`Low/Medium/High/Urgent`) and category.
-- **Role-based auth (JWT)** — two roles, **agent** and **customer**. Customers only ever see and comment on their *own* tickets; agents see and manage everything.
-- **Comments** with **internal agent-only notes** that are never returned to customers.
-- **SLA escalation background job** — a hosted `BackgroundService` periodically finds open tickets past their SLA due time, flags them as escalated and bumps their priority (the depth feature — see below).
-- **Proper REST design** — resource routes, correct status codes (`201` + `Location`, `204`, `403`, `404`, `409`), DTOs, model validation, and **consistent ProblemDetails (RFC 7807)** error bodies.
-- **Pagination, filtering, full-text search and sorting** on the ticket list, with pagination metadata in both the body and an `X-Pagination` header.
-- **Tested** — 19 unit tests (services, SLA rules, authorization) + 6 integration tests that hit the real HTTP API against a **real PostgreSQL container** (Testcontainers), including cross-customer access being blocked at the HTTP layer.
-- **CI** — GitHub Actions builds, runs the full test suite, and builds the Docker image on every push.
-- **Deploy-ready** — `Dockerfile`, `docker compose up`, and a **Render Blueprint** (`render.yaml`) that provisions the API + a free Postgres in one click.
-
-## Tech stack
-
-| Concern | Technology |
+| Concern | Tech |
 |---|---|
 | Framework | ASP.NET Core 10 (C#) |
-| Database | PostgreSQL + Entity Framework Core 10 (Npgsql) |
-| Auth | JWT bearer tokens with roles, BCrypt password hashing |
-| Docs | Swagger / OpenAPI (with a "Authorize" button) |
+| Database | PostgreSQL + EF Core 10 (Npgsql) |
+| Auth | JWT bearer tokens with roles, BCrypt hashing |
+| Docs | Swagger / OpenAPI |
 | Background work | Hosted `BackgroundService` + `PeriodicTimer` |
 | Tests | xUnit · `WebApplicationFactory` · Testcontainers (PostgreSQL) |
 | Tooling | Docker, Docker Compose, GitHub Actions, Render |
 
-## Domain model
-
-```
-User (Customer | Agent)
-  └─ raises ─▶ Ticket ──── assigned to ───▶ User (Agent)
-                 │  status, priority, category, SLA due / escalation
-                 └─ has ─▶ Comment (public | internal)
-```
-
-## Architecture
+## How it's laid out
 
 ```
 Controllers ─▶ TicketService (rules + authorization) ─▶ EF Core ─▶ PostgreSQL
@@ -106,31 +60,25 @@ Controllers ─▶ TicketService (rules + authorization) ─▶ EF Core ─▶ P
    SlaEscalationService (BackgroundService) ───┘ uses SlaEscalationRunner
 ```
 
-Controllers are thin and map a `ServiceResult` to HTTP status codes; all business
-rules (role scoping, SLA timing, comment visibility) live in the service layer so
-they can be unit-tested without a web server.
+Controllers stay thin — they map a `ServiceResult` onto the right HTTP status. The actual rules (role scoping, SLA timing, comment visibility) live in the service layer so I can test them directly. The domain is small: a `User` (customer or agent) raises a `Ticket` that can be assigned to an agent and carries a thread of `Comment`s (public or internal).
 
----
+## Running it
 
-## Getting started
-
-### Option A — Docker (recommended)
+### Docker (easiest)
 
 ```bash
 docker compose up --build
 ```
 
-Swagger is then at **http://localhost:8090/swagger**. The database is created and
-migrated automatically, and two accounts are seeded.
+Swagger lands at <http://localhost:8090/swagger>, the web app at <http://localhost:8090/>. The database is created, migrated and seeded with realistic tickets on first run — including a couple the SLA job escalates right away, so both sides of the UI have something to show.
 
-### Option B — Run locally
+### Locally
 
-Needs the .NET 10 SDK and a PostgreSQL instance (the connection string lives in
-`appsettings.Development.json`).
+You'll need the .NET 10 SDK and a Postgres instance (`docker compose up db` gives you one). The dev connection string lives in `appsettings.Development.json`.
 
 ```bash
 cd HelpDesk.Api
-dotnet run        # Swagger at the URL printed in the console
+dotnet run
 ```
 
 ### Seeded accounts
@@ -142,75 +90,34 @@ dotnet run        # Swagger at the URL printed in the console
 
 Or register your own customer via `POST /api/auth/register`.
 
----
+## API at a glance
 
-## API reference
+Everything under `/api/tickets`, `/api/users` and the comment routes needs `Authorization: Bearer <token>`.
 
-All `/api/tickets`, `/api/users` and comment endpoints require
-`Authorization: Bearer <token>`.
+**Auth** — `POST /api/auth/register`, `POST /api/auth/login` (both return `{ token, email, fullName, role }`).
 
-### Auth — `/api/auth`
-| Method | Route | Description |
-|---|---|---|
-| `POST` | `/register` | Register a customer; returns `{ token, email, fullName, role }`. |
-| `POST` | `/login` | Log in (works for seeded agents too). |
+**Tickets** — `GET /api/tickets` (customers see only their own), `GET /{id}`, `POST /`, `PUT /{id}` *(agent)*, `POST /{id}/assign` *(agent)*, `DELETE /{id}` *(agent)*, plus `GET|POST /{id}/comments` (`isInternal` is honoured only for agents).
 
-### Tickets — `/api/tickets`
-| Method | Route | Who | Description |
-|---|---|---|---|
-| `GET` | `/` | any | List tickets (see query params below). Customers see only their own. |
-| `GET` | `/{id}` | any | Get one ticket. |
-| `POST` | `/` | any | Raise a ticket. |
-| `PUT` | `/{id}` | agent | Update status / priority / category. |
-| `POST` | `/{id}/assign` | agent | Assign (or unassign) to an agent. |
-| `DELETE` | `/{id}` | agent | Delete a ticket. |
-| `GET` | `/{id}/comments` | any | List comments (customers never see internal notes). |
-| `POST` | `/{id}/comments` | any | Add a comment (`isInternal` is honoured only for agents). |
+**Users** — `GET /api/users/me`, `GET /api/users/agents` *(agent)*.
 
-### Users — `/api/users`
-| Method | Route | Who | Description |
-|---|---|---|---|
-| `GET` | `/me` | any | The current user. |
-| `GET` | `/agents` | agent | List agents (for assignment). |
-
-### List query parameters
-
-```
-GET /api/tickets?status=Open&priority=High&category=Network
-                &assignedAgentId=2&escalated=true&search=vpn
-                &sort=slaDueAt%20asc&page=1&pageSize=20
-```
-
-- **Filter:** `status`, `priority`, `category`, `assignedAgentId`, `createdById`, `escalated`
-- **Search:** `search` (case-insensitive over title + description)
-- **Sort:** `sort` = `createdAt | updatedAt | priority | status | slaDueAt` + optional `asc`/`desc`
-- **Paginate:** `page` (default 1), `pageSize` (default 20, max 100)
-
-The response is `{ items, page, pageSize, totalCount, totalPages, hasNextPage, hasPreviousPage }`.
-
-### Quick walkthrough
+The ticket list takes filters (`status`, `priority`, `category`, `assignedAgentId`, `createdById`, `escalated`), a case-insensitive `search` over title + description, `sort` (`createdAt | updatedAt | priority | status | slaDueAt`, optional `asc`/`desc`), and `page` / `pageSize` (default 20, max 100):
 
 ```bash
 BASE=http://localhost:8090
 
-# Log in as the seeded agent
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \
   -d '{"email":"agent@helpdesk.local","password":"Agent#12345"}' | jq -r .token)
 
-# Create a ticket
 curl -X POST $BASE/api/tickets -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"VPN keeps dropping","description":"Disconnects every few minutes","category":"Network","priority":"High"}'
 
-# List high-priority open tickets, newest first
-curl "$BASE/api/tickets?priority=High&status=Open" -H "Authorization: Bearer $TOKEN"
+curl "$BASE/api/tickets?priority=High&status=Open&sort=slaDueAt%20asc" -H "Authorization: Bearer $TOKEN"
 ```
 
----
+## The SLA escalation job
 
-## The SLA escalation job (depth feature)
-
-Each priority has an SLA resolution target (configurable in `appsettings.json`):
+Each priority has a resolution target, and a ticket's `slaDueAt` is stamped from that when it's created. Defaults (configurable under the `Sla` section in `appsettings.json`):
 
 | Priority | Target |
 |---|---|
@@ -219,44 +126,27 @@ Each priority has an SLA resolution target (configurable in `appsettings.json`):
 | Medium | 24 hours |
 | Low | 72 hours |
 
-When a ticket is created, its `slaDueAt` is stamped from that target.
-[`SlaEscalationService`](HelpDesk.Api/Background/SlaEscalationService.cs) runs every
-minute (configurable), and for every still-open ticket whose SLA has lapsed it sets
-`isEscalated`, records `escalatedAt`, and **bumps the priority one level** (capped at
-Urgent). The pass itself lives in
-[`SlaEscalationRunner`](HelpDesk.Api/Services/SlaEscalationRunner.cs) so it can be
-unit-tested directly.
+[`SlaEscalationService`](HelpDesk.Api/Background/SlaEscalationService.cs) wakes up every 60s (also configurable) and, for each still-open ticket whose SLA has lapsed, sets `isEscalated`, records `escalatedAt`, and bumps the priority one level (capped at Urgent). I pulled the actual pass out into [`SlaEscalationRunner`](HelpDesk.Api/Services/SlaEscalationRunner.cs) so the escalation logic can be unit-tested without the timer or a host.
 
----
-
-## Running the tests
+## Tests
 
 ```bash
 dotnet test
 ```
 
-- **Unit tests** run on in-memory SQLite — fast, no Docker needed.
-- **Integration tests** spin up a real PostgreSQL container via **Testcontainers** and
-  exercise the live HTTP API (auth, controllers, EF Core). These need **Docker running**.
+Unit tests run on in-memory SQLite and need nothing extra. The integration tests start a real PostgreSQL container through Testcontainers and exercise the live HTTP API, so they need Docker running. CI runs both on every push.
 
----
+## Deploying your own
 
-## Deploying a live demo (Render, free)
+`render.yaml` is a Render Blueprint: on [dashboard.render.com](https://dashboard.render.com) pick **New ▸ Blueprint** against this repo and it provisions the Docker service plus a free Postgres, generates a JWT signing key, and wires the connection string in. Public Swagger ends up at `https://<your-service>.onrender.com/swagger`. Note that Render's free Postgres is deleted ~30 days after creation — fine for a demo, bump to a paid plan for anything you want to keep.
 
-1. Push this repo to GitHub.
-2. On [dashboard.render.com](https://dashboard.render.com) → **New ▸ Blueprint**, pick this repo.
-3. Render reads [`render.yaml`](render.yaml), provisions the API (Docker) **and** a free
-   PostgreSQL database, generates a JWT key, and wires the connection in.
-4. When it goes green, your public Swagger is at `https://<your-service>.onrender.com/swagger`.
+The JWT key is never committed: locally it comes from `appsettings.Development.json`, in Docker from `Jwt__Key` (override the demo default with a `.env` — see `.env.example`), and on Render it's generated. The app refuses to start without a key of at least 32 bytes.
 
-(The free Render web service sleeps after inactivity — the first request after a nap takes a few seconds to wake.)
+## What I'd add next
 
-## Roadmap
-
-- Refresh tokens and an admin role for user management.
-- Email notifications on assignment / status change.
-- Attachments on tickets.
-- Per-agent SLA dashboards.
+- Refresh tokens and an admin role for user management
+- Email notifications on assignment / status change
+- Attachments on tickets
 
 ## License
 
